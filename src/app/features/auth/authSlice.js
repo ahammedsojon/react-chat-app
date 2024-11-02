@@ -1,5 +1,4 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { apiSlice } from "../api/apiSlice";
 
 const initialState = {
   accessToken: null,
@@ -14,8 +13,12 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.user = action.payload.user;
     },
+    logout: (state) => {
+      state.accessToken = null;
+      state.user = null;
+    },
   },
 });
 
-export const { userLoggedIn } = authSlice.actions;
+export const { userLoggedIn, logout } = authSlice.actions;
 export default authSlice.reducer;
