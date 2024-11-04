@@ -21,10 +21,10 @@ export default function ChatItems() {
     content = <li>Loading....</li>;
   } else if (!isLoading && isError) {
     content = <li>{error?.data}</li>;
-  } else if (!isLoading && !isError && conversations.length === 0) {
+  } else if (!isLoading && !isError && conversations?.length === 0) {
     content = <li>No conversations found!</li>;
   } else {
-    content = conversations.map((conversation) => {
+    content = conversations?.map((conversation) => {
       const { id, users, timestamp, message } = conversation;
       const partner = getPartnerInfo(users, email);
       return (
