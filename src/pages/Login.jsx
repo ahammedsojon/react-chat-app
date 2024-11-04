@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useLoginMutation } from "../app/features/auth/authApi";
 import logoImage from "../assets/images/lws-logo-light.svg";
 import Error from "../components/ui/Error";
-import { useEffect, useState } from "react";
-import { useLoginMutation } from "../app/features/auth/authApi";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -33,7 +33,7 @@ export default function Login() {
     if (responseError?.data) {
       setError(responseError?.data);
     }
-  }, [data, responseError]);
+  }, [data, responseError, navigate]);
   return (
     <div className="grid place-items-center h-screen bg-[#F9FAFB">
       <div className="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
