@@ -7,7 +7,10 @@ import { useGetMessagesQuery } from "../../../app/features/messages/messagesApi"
 
 export default function ChatBody() {
   const { id } = useParams();
-  const { data: messages, isLoading, isError, error } = useGetMessagesQuery(id);
+  const { data, isLoading, isError, error } = useGetMessagesQuery(id);
+  const { data: messages, totalCount } = data || {};
+  console.log(messages?.length);
+
   let content = null;
   if (isLoading) {
     content = <div>Loading....</div>;
@@ -19,7 +22,7 @@ export default function ChatBody() {
     content = (
       <>
         <ChatHead message={messages[0]} />
-        <Messages messages={messages} />
+        <Messages messages={messages} id={id} totalCount={totalCount} />
         <Options info={messages[0]} />
       </>
     );

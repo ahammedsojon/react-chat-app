@@ -54,7 +54,7 @@ export default function ChatItems() {
   } else {
     content = (
       <InfiniteScroll
-        dataLength={conversations.length}
+        dataLength={conversations?.length}
         next={fetchMore}
         hasMore={hasMore}
         loader={<h4>Loading...</h4>}

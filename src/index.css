@@ -8,3 +8,9 @@
     grid-template-rows: auto 1fr auto;
   }
 }
+
+/* .messages .infinite-scroll-component {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+} */
