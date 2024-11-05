@@ -1,3 +1,4 @@
+import { io } from "socket.io-client";
 import { apiSlice } from "../api/apiSlice";
 import { messagesApi } from "../messages/messagesApi";
 
@@ -5,7 +6,76 @@ export const conversationsApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getConversations: builder.query({
       query: (email) =>
-        `conversations?participants_like=${email}&_sort=timestamp&_order=desc&_page=1&_limit=5`,
+        `conversations?participants_like=${email}&_sort=timestamp&_order=desc&_page=1&_limit=${
+          import.meta.env.VITE_CONVERSATIONS_LIMIT
+        }`,
+      transformResponse(apiResponse, meta) {
+        const totalCount = meta.response.headers.get("X-Total-Count");
+        return {
+          data: apiResponse,
+          totalCount,
+        };
+      },
+      async onCacheEntryAdded(
+        arg,
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
+      ) {
+        const socket = io("http://localhost:9000", {
+          reconnectionDelay: 1000,
+          reconnection: true,
+          reconnectionAttemps: 10,
+          transports: ["websocket"],
+          agent: false,
+          upgrade: false,
+          rejectUnauthorized: false,
+        });
+        try {
+          await cacheDataLoaded;
+          socket.on("conversation", (data) => {
+            updateCachedData((draft) => {
+              console.log("draft: ", draft);
+              console.log("data: ", data);
+              if (!draft || !draft.data) draft.data = [];
+              const conversation = draft.data.find(
+                (c) => c.id == data?.data?.id
+              );
+              if (conversation?.id) {
+                conversation.message = data?.data?.message;
+                conversation.timestamp = data?.data?.timestamp;
+              }
+            });
+          });
+        } catch (error) {
+          console.log(error);
+        }
+        await cacheEntryRemoved;
+        socket.close();
+      },
+    }),
+    getMoreConversations: builder.query({
+      query: ({ email, page }) =>
+        `conversations?participants_like=${email}&_sort=timestamp&_order=desc&_page=${page}&_limit=${
+          import.meta.env.VITE_CONVERSATIONS_LIMIT
+        }`,
+      async onQueryStarted(arg, { queryFulfilled, dispatch }) {
+        const conversations = await queryFulfilled;
+        if (conversations?.data?.length > 0) {
+          // update conversation cache pessimitically start
+          dispatch(
+            apiSlice.util.updateQueryData(
+              "getConversations",
+              arg.email,
+              (draft) => {
+                return {
+                  data: [...draft.data, ...conversations.data],
+                  totalCount: Number(draft.totalCount),
+                };
+              }
+            )
+          );
+          // update conversation cache pessimitically end
+        }
+      },
     }),
     getConversation: builder.query({
       query: ({ userEmail, participantEmail }) =>
@@ -62,7 +132,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
             "getConversations",
             arg.sender,
             (draft) => {
-              const draftConversation = draft.find((c) => c.id == arg.id);
+              const draftConversation = draft.data.find((c) => c.id == arg.id);
               draftConversation.message = arg.data.message;
               draftConversation.timestamp = arg.data.timestamp;
             }
@@ -109,6 +179,7 @@ export const conversationsApi = apiSlice.injectEndpoints({
 
 export const {
   useGetConversationsQuery,
+  useGetMoreConversationsQuery,
   useGetConversationQuery,
   useAddConversationMutation,
   useEditConversationMutation,
